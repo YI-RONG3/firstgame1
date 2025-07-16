@@ -71,7 +71,6 @@
 
     let balls = [];
 
-    // 這裡換成你想要的球球圖片網址
     const ballImageURL = "https://i.imgur.com/O6aQ8YQ.png";
 
     const paddle = document.createElement("div");
@@ -98,6 +97,16 @@
       paddle.style.left = paddleX + "px";
     });
 
+    function randomSpeed() {
+      // 隨機水平速度：-3 ~ 3 但不等於0，垂直速度固定 -3
+      let vx = 0;
+      while(vx === 0) {
+        vx = Math.floor(Math.random() * 7) - 3;
+      }
+      let vy = -3;
+      return { vx, vy };
+    }
+
     function createBall(x, y, vx, vy) {
       const ball = document.createElement("div");
       ball.classList.add("ball");
@@ -108,24 +117,13 @@
       return { element: ball, x, y, vx, vy };
     }
 
-    // 隨機初速度：水平速度 vx 範圍 -3 ~ 3（排除0），垂直速度固定 -3（往上）
-    function randomSpeed() {
-      let vx = 0;
-      while (vx === 0) {
-        vx = Math.floor(Math.random() * 7) - 3; // -3 ~ 3
-      }
-      let vy = -3;
-      return { vx, vy };
-    }
-
     function init() {
       balls.forEach(b => game.removeChild(b.element));
       balls = [];
 
       let startX = gameWidth / 2 - ballSize / 2;
       let startY = gameHeight / 2 - ballSize / 2;
-
-      const speed = randomSpeed();
+      let speed = randomSpeed();
       let initialBall = createBall(startX, startY, speed.vx, speed.vy);
       balls.push(initialBall);
       game.appendChild(initialBall.element);
@@ -180,7 +178,7 @@
           nextX + ballSize > paddleX &&
           nextX < paddleX + paddleWidth
         ) {
-          // 先反彈球的速度
+          // 反彈球的速度
           ball.vy = -ball.vy;
           nextY = ball.y + ball.vy;
 
@@ -193,10 +191,15 @@
           score++;
           updateScore();
 
-          // 新增一顆分裂球，初速度與原球相似但水平相反方向
-          let newBall = createBall(ball.x, ball.y, -ball.vx, ball.vy);
-          balls.push(newBall);
-          game.appendChild(newBall.element);
+          // 新增5顆分裂球，水平速度分散，垂直速度與原球相反
+          for (let j = 0; j < 5; j++) {
+            let angle = (j - 2) * 1.5; // -3, -1.5, 0, 1.5, 3 (水平速度偏移)
+            let newVx = -ball.vx + angle;
+            let newVy = ball.vy;
+            let newBall = createBall(ball.x, ball.y, newVx, newVy);
+            balls.push(newBall);
+            game.appendChild(newBall.element);
+          }
 
           continue;
         }
@@ -217,7 +220,7 @@
 
       if (balls.length === 0) {
         endGame(false);
-      } else if (score >= 507) {
+      } else if (score >= 100) {
         endGame(true);
       } else {
         requestAnimationFrame(gameLoop);
