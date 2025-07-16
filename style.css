@@ -1,0 +1,54 @@
+body {
+  margin: 0;
+  background: #222;
+  overflow: hidden;
+  font-family: "微軟正黑體", sans-serif;
+  color: white;
+  user-select: none;
+}
+
+#game {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  margin: 20px auto;
+  background: #111;
+  border: 2px solid #555;
+  overflow: hidden;
+}
+
+.ball {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #f39c12;
+}
+
+#paddle {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 20px;
+  background: #27ae60;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#scoreBoard {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 24px;
+}
+
+#message {
+  text-align: center;
+  font-size: 30px;
+  color: #f39c12;
+  margin-top: 15px;
+}
