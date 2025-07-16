@@ -122,6 +122,7 @@
       message.textContent = "";
       gameOver = false;
       paddle.style.left = paddleX + "px";
+      requestAnimationFrame(gameLoop);
     }
 
     function updateScore() {
@@ -140,7 +141,9 @@
     function gameLoop() {
       if(gameOver) return;
 
-      balls.forEach((ball) => {
+      // 用倒序迴圈避免刪除時影響索引
+      for (let i = balls.length - 1; i >= 0; i--) {
+        let ball = balls[i];
         ball.x += ball.vx;
         ball.y += ball.vy;
 
@@ -165,29 +168,29 @@
           score++;
           updateScore();
 
-          let newBalls = [];
-          balls.forEach((b) => {
-            let b1 = createBall(b.x, b.y, b.vx, -b.vy);
-            let b2 = createBall(b.x, b.y, -b.vx, -b.vy);
-            newBalls.push(b1, b2);
+          // 只對該球進行倍增
+          let b1 = createBall(ball.x, ball.y, ball.vx, -ball.vy);
+          let b2 = createBall(ball.x, ball.y, -ball.vx, -ball.vy);
+          game.appendChild(b1.element);
+          game.appendChild(b2.element);
 
-            game.appendChild(b1.element);
-            game.appendChild(b2.element);
+          game.removeChild(ball.element);
+          balls.splice(i, 1);
 
-            game.removeChild(b.element);
-          });
-          balls = newBalls;
+          balls.push(b1, b2);
         }
 
-        // 球掉到底部，移除該球
+        // 球掉到底部移除
         if (ball.y > gameHeight) {
           game.removeChild(ball.element);
-          balls = balls.filter(b => b !== ball);
+          balls.splice(i, 1);
         }
 
-        ball.element.style.left = ball.x + "px";
-        ball.element.style.top = ball.y + "px";
-      });
+        if (balls[i]) {
+          balls[i].element.style.left = balls[i].x + "px";
+          balls[i].element.style.top = balls[i].y + "px";
+        }
+      }
 
       // 判斷遊戲結束條件
       if (balls.length === 0) {
@@ -200,7 +203,6 @@
     }
 
     init();
-    gameLoop();
   </script>
 </body>
 </html>
