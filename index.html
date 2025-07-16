@@ -71,6 +71,7 @@
 
     let balls = [];
 
+    // 這裡換成你想要的球球圖片網址
     const ballImageURL = "https://i.imgur.com/O6aQ8YQ.png";
 
     const paddle = document.createElement("div");
@@ -107,13 +108,25 @@
       return { element: ball, x, y, vx, vy };
     }
 
+    // 隨機初速度：水平速度 vx 範圍 -3 ~ 3（排除0），垂直速度固定 -3（往上）
+    function randomSpeed() {
+      let vx = 0;
+      while (vx === 0) {
+        vx = Math.floor(Math.random() * 7) - 3; // -3 ~ 3
+      }
+      let vy = -3;
+      return { vx, vy };
+    }
+
     function init() {
       balls.forEach(b => game.removeChild(b.element));
       balls = [];
 
       let startX = gameWidth / 2 - ballSize / 2;
       let startY = gameHeight / 2 - ballSize / 2;
-      let initialBall = createBall(startX, startY, 3, -3);
+
+      const speed = randomSpeed();
+      let initialBall = createBall(startX, startY, speed.vx, speed.vy);
       balls.push(initialBall);
       game.appendChild(initialBall.element);
 
@@ -122,7 +135,6 @@
       message.textContent = "";
       gameOver = false;
       paddle.style.left = paddleX + "px";
-      requestAnimationFrame(gameLoop);
     }
 
     function updateScore() {
@@ -139,60 +151,70 @@
     }
 
     function gameLoop() {
-      if(gameOver) return;
+      if (gameOver) return;
 
-      // 用倒序迴圈避免刪除時影響索引
       for (let i = balls.length - 1; i >= 0; i--) {
         let ball = balls[i];
-        ball.x += ball.vx;
-        ball.y += ball.vy;
 
-        if (ball.x <= 0 || ball.x + ballSize >= gameWidth) {
+        // 下一幀位置
+        let nextX = ball.x + ball.vx;
+        let nextY = ball.y + ball.vy;
+
+        // 左右牆反彈
+        if (nextX <= 0 || nextX + ballSize >= gameWidth) {
           ball.vx = -ball.vx;
-          ball.x = ball.x <= 0 ? 0 : gameWidth - ballSize;
+          nextX = ball.x + ball.vx;
         }
 
-        if (ball.y <= 0) {
+        // 上方牆反彈
+        if (nextY <= 0) {
           ball.vy = -ball.vy;
-          ball.y = 0;
+          nextY = ball.y + ball.vy;
         }
 
+        // 碰撞桿子檢測（球向下且下一幀球接觸或穿過桿子）
         if (
-          ball.y + ballSize >= paddleY &&
-          ball.y + ballSize <= paddleY + paddleHeight &&
-          ball.x + ballSize > paddleX &&
-          ball.x < paddleX + paddleWidth &&
-          ball.vy > 0
+          ball.vy > 0 &&
+          ball.y + ballSize <= paddleY &&
+          nextY + ballSize >= paddleY &&
+          nextX + ballSize > paddleX &&
+          nextX < paddleX + paddleWidth
         ) {
+          // 先反彈球的速度
           ball.vy = -ball.vy;
+          nextY = ball.y + ball.vy;
+
+          // 球位置更新
+          ball.x = nextX;
+          ball.y = nextY;
+          ball.element.style.left = ball.x + "px";
+          ball.element.style.top = ball.y + "px";
+
           score++;
           updateScore();
 
-          // 只對該球進行倍增
-          let b1 = createBall(ball.x, ball.y, ball.vx, -ball.vy);
-          let b2 = createBall(ball.x, ball.y, -ball.vx, -ball.vy);
-          game.appendChild(b1.element);
-          game.appendChild(b2.element);
+          // 新增一顆分裂球，初速度與原球相似但水平相反方向
+          let newBall = createBall(ball.x, ball.y, -ball.vx, ball.vy);
+          balls.push(newBall);
+          game.appendChild(newBall.element);
 
+          continue;
+        }
+
+        // 球掉到底部，移除球
+        if (nextY > gameHeight) {
           game.removeChild(ball.element);
           balls.splice(i, 1);
-
-          balls.push(b1, b2);
+          continue;
         }
 
-        // 球掉到底部移除
-        if (ball.y > gameHeight) {
-          game.removeChild(ball.element);
-          balls.splice(i, 1);
-        }
-
-        if (balls[i]) {
-          balls[i].element.style.left = balls[i].x + "px";
-          balls[i].element.style.top = balls[i].y + "px";
-        }
+        // 更新球位置
+        ball.x = nextX;
+        ball.y = nextY;
+        ball.element.style.left = ball.x + "px";
+        ball.element.style.top = ball.y + "px";
       }
 
-      // 判斷遊戲結束條件
       if (balls.length === 0) {
         endGame(false);
       } else if (score >= 507) {
@@ -203,6 +225,7 @@
     }
 
     init();
+    gameLoop();
   </script>
 </body>
 </html>
